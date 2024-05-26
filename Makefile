@@ -54,15 +54,26 @@ major-upgrade 	= $(shell expr $(major) + 1).$(minor).$(patch)
 minor-upgrade 	= $(major).$(shell expr $(minor) + 1).$(patch)
 patch-upgrade 	= $(major).$(minor).$(shell expr $(patch) + 1)
 
-dirty 			= $(shell git diff --shortstat 2>/dev/null 2>/dev/null | tail -n1)
+dirty = $(shell git diff --quiet)
+dirty-contents 			= $(shell git diff --shortstat 2>/dev/null 2>/dev/null | tail -n1)
+
+
 
 # ====================================================================================
 # Package-Specific Target(s)
 # ------------------------------------------------------------------------------------
 
+fail:
+
 bump:
-	@$(information) Bumping $(name) package VERSION from $(version)
+	if [[ ! $(git diff --quiet --exit-code) ]]; then ;\
+    	@echo "$(red-bold)Dirty Working Tree$(reset) - Commit Changes and Try Again" ;\
+    	exit 1 ;\
+	else ;\
+		@echo "$(blue-bold)Version Bump$(reset): Current Version - $(version)" ;\
+		@echo $(patch-upgrade) > VERSION ;\
+		@echo "$(green-bold)Updated Version$(reset): $(verison)" ;\
+	fi
 
-	@echo $(patch-upgrade) > VERSION
-
-	@$(complete) Version Bump
+commit:
+	@git add VERSION
